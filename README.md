@@ -1,5 +1,9 @@
 # luziBuddy（炉子Buddy）
 
+[![Agent Skill](https://img.shields.io/badge/Agent-Skill-blueviolet)](https://github.com/mfd2033/luzi-buddy-skill)
+[![Language: PowerShell](https://img.shields.io/badge/language-PowerShell-5391FE?logo=powershell&logoColor=white)](https://github.com/mfd2033/luzi-buddy-skill)
+[![API: luzi.top](https://img.shields.io/badge/API-luzi.top-000000)](https://luzi.top)
+
 炉子Buddy（luziBuddy）是炉子(luzi.top) Agent API 的技能封装（Skill）。把官方声明的能力封装成可调用接口，token 通过环境变量读取，避免硬编码泄露。本技能与具体 Agent 工具无关，理论上任意支持 Skill 机制的 Agent 均可使用。
 
 ## 安装为 Agent 技能
