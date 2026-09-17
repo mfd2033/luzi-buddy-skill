@@ -31,7 +31,7 @@ $env:LUZI_AGENT_TOKEN = 'lza_xxxx'
 | 随手记读取 | GET | `/api/v1/notes/` |
 | 标签读取 | GET | `/api/v1/notes/tags`、`/api/v1/tags/` |
 | 配方读取 | GET | `/api/v1/recipes/` |
-| 搜索读取 | GET | `/api/v1/search` |
+| 搜索读取 | GET | `/api/v1/search?q=<词>`（需带 `q` 参数，否则 400） |
 | 浏览广场 | GET | `/api/v1/community/plaza/publications`（2026-09-17 真实 token 实测 200，返回 `total`/`limit`/`offset` + `items[]`，每条含 `id`/`title`/`title_zh`/`summary`/`tags`/`cover_public_url`/`save_count` 等字段） |
 
 ### 调用示例
@@ -44,7 +44,7 @@ $env:LUZI_AGENT_TOKEN = 'lza_xxxx'
 .\luzi.ps1 tags     # 随手记标签 -> GET /api/v1/notes/tags
 .\luzi.ps1 tagsall  # 全部标签   -> GET /api/v1/tags/
 .\luzi.ps1 recipes  # 配方读取   -> GET /api/v1/recipes/
-.\luzi.ps1 search   # 搜索读取   -> GET /api/v1/search
+.\luzi.ps1 search -Query "前端设计"   # 搜索读取 -> GET /api/v1/search?q=前端设计
 .\luzi.ps1 plaza    # 浏览广场   -> GET /api/v1/community/plaza/publications
 ```
 
@@ -52,11 +52,12 @@ $env:LUZI_AGENT_TOKEN = 'lza_xxxx'
 
 | 资源 | 关键返回字段 |
 |---|---|
-| `assets` | `items[]`：`id`、`name`、`type`、`content`、`updated_at` 等 |
+| `assets` | `items[]`：`id`、`type`、`title`、`title_zh`、`summary`、`updated_at` 等 |
 | `notes` | `items[]`：`id`、`title`、`body`、`tags`、`created_at` 等 |
-| `tags` / `tagsall` | `items[]`：`id`、`name`、`count` 等 |
+| `tags` | 单个 tag 对象：`id`、`name`、`normalized_name`、`is_system`、`kind`（**不是** `items[]` 包装，与 `tagsall` 不同） |
+| `tagsall` | `items[]`：`id`、`name`、`count` 等 |
 | `recipes` | `items[]`：`id`、`title`、`description`、`steps` 等 |
-| `search` | `items[]`：按查询返回的匹配资产/随手记/配方 |
+| `search` | `items[]` + `total`/`limit`/`offset`：按 `q` 返回的匹配资产/随手记/配方（**必须带 `-Query`**，否则 400） |
 | `plaza` | `total`/`limit`/`offset` + `items[]`：`id`、`title`、`title_zh`、`summary`、`tags`、`cover_public_url`、`save_count`、`copied_count` 等 |
 
 > 直接用 `Invoke-RestMethod` 也可，需手动带 `Authorization: Bearer $LUZI_AGENT_TOKEN` 头（见 `SKILL.md`）。

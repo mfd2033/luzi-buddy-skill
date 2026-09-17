@@ -1,12 +1,14 @@
-<#
+﻿<#
 .SYNOPSIS
   luzi-skill: 调用炉子(luzi.top) Agent API 已验证的读取能力
 .DESCRIPTION
   Token 从环境变量 LUZI_AGENT_TOKEN 读取，也可放置于脚本同目录 .env 文件（LUZI_AGENT_TOKEN=...）
-  用法: .\luzi.ps1 <assets|notes|tags|tagsall|recipes|search|plaza>
+  用法: .\luzi.ps1 <assets|notes|tags|tagsall|recipes|search|plaza> [-Query "关键词"]
+  search 必带 -Query，例如: .\luzi.ps1 search -Query "前端设计"
 #>
 param(
   [Parameter(Position=0)] [string]$Resource = 'assets',
+  [string]$Query,
   [string]$Token = $env:LUZI_AGENT_TOKEN,
   [string]$BaseUrl = 'https://app.luzi.top/api/v1'
 )
@@ -40,6 +42,13 @@ if (-not $map.ContainsKey($Resource)) {
 }
 
 $uri = "$BaseUrl/$($map[$Resource])"
+if ($Resource -eq 'search') {
+  if (-not $Query) {
+    Write-Error 'search 需要查询词：请加 -Query "你的关键词"（如 .\luzi.ps1 search -Query "前端设计"）'
+    exit 1
+  }
+  $uri += '?q=' + [System.Uri]::EscapeDataString($Query)
+}
 try {
   # 关键：PowerShell 5.1 的 Invoke-RestMethod / Invoke-WebRequest 会把响应体
   # 按 ISO-8859-1 解码成字符串，导致 UTF-8 中文变成 Mojibake（如 ç­è§é¢ä¸è½½å¨）。

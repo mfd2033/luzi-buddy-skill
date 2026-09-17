@@ -19,7 +19,7 @@ description: 调用炉子(luzi.top) Agent API 的读取能力。已验证读取�
 | 随手记读取 | GET | `/api/v1/notes/` |
 | 标签读取 | GET | `/api/v1/notes/tags` 与 `/api/v1/tags/` |
 | 配方读取 | GET | `/api/v1/recipes/` |
-| 搜索读取 | GET | `/api/v1/search` |
+| 搜索读取 | GET | `/api/v1/search?q=<词>`（需带 `q` 参数，否则 400） |
 | 浏览广场 | GET | `/api/v1/community/plaza/publications`（2026-09-17 真实 token 实测 200，返回 `total`/`limit`/`offset` + `items[]`，每条含 `id`/`title`/`title_zh`/`summary`/`tags`/`cover_public_url`/`save_count`/`copied_count` 等字段） |
 
 ## 用法
@@ -32,7 +32,7 @@ $env:LUZI_AGENT_TOKEN = 'lza_xxx'   # 你的 agent 凭证
 .\luzi.ps1 tags        # 读取随手记标签
 .\luzi.ps1 tagsall     # 读取全部标签
 .\luzi.ps1 recipes     # 读取配方
-.\luzi.ps1 search      # 搜索读取
+.\luzi.ps1 search -Query "前端设计"   # 搜索读取（必须带 -Query）
 .\luzi.ps1 plaza       # 浏览广场
 ```
 
