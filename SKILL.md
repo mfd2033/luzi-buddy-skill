@@ -1,11 +1,11 @@
 ---
-name: luzi-skill
-description: 调用炉子(luzi.top) Agent API 的读取能力。已验证读取：资产/随手记/标签/配方/搜索/广场。Token 通过环境变量 LUZI_AGENT_TOKEN 提供。当用户需要读取或操作炉子中的资产、随手记、配方、标签、广场内容时使用。
+name: luzi-buddy-skill
+description: 炉子Buddy（luziBuddy）：调用炉子(luzi.top) Agent API 的读取能力。已验证读取：资产/随手记/标签/配方/搜索/广场。Token 通过环境变量 LUZI_AGENT_TOKEN 提供。当用户需要读取或操作炉子中的资产、随手记、配方、标签、广场内容时使用。
 ---
 
-# luzi-skill（炉子 Agent API）
+# luziBuddy（炉子Buddy）
 
-封装炉子(luzi.top) Agent 凭证的 HTTP API 调用。
+炉子Buddy（luziBuddy）封装炉子(luzi.top) Agent 凭证的 HTTP API 调用。
 
 - **Base URL**: `https://app.luzi.top/api/v1/`
 - **认证**: `Authorization: Bearer $LUZI_AGENT_TOKEN`

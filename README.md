@@ -1,6 +1,6 @@
-# luzi-skill
+# luziBuddy（炉子Buddy）
 
-炉子(luzi.top) Agent API 的技能封装（Skill）。把官方声明的能力封装成可调用接口，token 通过环境变量读取，避免硬编码泄露。本技能与具体 Agent 工具无关，理论上任意支持 Skill 机制的 Agent 均可使用。
+炉子Buddy（luziBuddy）是炉子(luzi.top) Agent API 的技能封装（Skill）。把官方声明的能力封装成可调用接口，token 通过环境变量读取，避免硬编码泄露。本技能与具体 Agent 工具无关，理论上任意支持 Skill 机制的 Agent 均可使用。
 
 ## 安装为 Agent 技能
 

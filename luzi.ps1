@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  luzi-skill: 调用炉子(luzi.top) Agent API 已验证的读取能力
+  luziBuddy（炉子Buddy）: 调用炉子(luzi.top) Agent API 已验证的读取能力
 .DESCRIPTION
   Token 从环境变量 LUZI_AGENT_TOKEN 读取，也可放置于脚本同目录 .env 文件（LUZI_AGENT_TOKEN=...）
   用法: .\luzi.ps1 <assets|notes|tags|tagsall|recipes|search|plaza> [-Query "关键词"]
