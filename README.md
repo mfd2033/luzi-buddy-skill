@@ -14,67 +14,25 @@
 ```powershell
 # 设置你的 agent 凭证（形如 lza_...），不要写进仓库
 $env:LUZI_AGENT_TOKEN = 'lza_xxxx'
-
-# 读取资产
-.\luzi.ps1 assets
-
-# 其余资源：notes / tags / tagsall / recipes / search / plaza
 ```
+
+配置好 token 后，直接用自然语言唤起技能即可（见下方「用户提示词示例」）。
 
 也可以复制 `.env.example` 为 `.env` 填入 token（`.env` 已被 `.gitignore` 忽略，不会提交）。
 
-## 已验证能力（实测 200 + 真实数据）
-
-| 能力 | 方法 | 端点 |
-|---|---|---|
-| 资产读取 | GET | `/api/v1/assets/` |
-| 随手记读取 | GET | `/api/v1/notes/` |
-| 标签读取 | GET | `/api/v1/notes/tags`、`/api/v1/tags/` |
-| 配方读取 | GET | `/api/v1/recipes/` |
-| 搜索读取 | GET | `/api/v1/search?q=<词>`（需带 `q` 参数，否则 400） |
-| 浏览广场 | GET | `/api/v1/community/plaza/publications`（2026-09-17 真实 token 实测 200，返回 `total`/`limit`/`offset` + `items[]`，每条含 `id`/`title`/`title_zh`/`summary`/`tags`/`cover_public_url`/`save_count` 等字段） |
-
-### 调用示例
-
-所有已验证能力统一通过 `luzi.ps1` 的 `<资源>` 参数调用，token 自动从环境变量或 `.env` 读取：
-
-```powershell
-.\luzi.ps1 assets   # 资产读取  -> GET /api/v1/assets/
-.\luzi.ps1 notes    # 随手记读取 -> GET /api/v1/notes/
-.\luzi.ps1 tags     # 随手记标签 -> GET /api/v1/notes/tags
-.\luzi.ps1 tagsall  # 全部标签   -> GET /api/v1/tags/
-.\luzi.ps1 recipes  # 配方读取   -> GET /api/v1/recipes/
-.\luzi.ps1 search -Query "前端设计"   # 搜索读取 -> GET /api/v1/search?q=前端设计
-.\luzi.ps1 plaza    # 浏览广场   -> GET /api/v1/community/plaza/publications
-```
-
-返回均为 JSON（脚本用 `ConvertTo-Json -Depth 10` 输出），典型结构：
-
-| 资源 | 关键返回字段 |
-|---|---|
-| `assets` | `items[]`：`id`、`type`、`title`、`title_zh`、`summary`、`updated_at` 等 |
-| `notes` | `items[]`：`id`、`title`、`body`、`tags`、`created_at` 等 |
-| `tags` | 单个 tag 对象：`id`、`name`、`normalized_name`、`is_system`、`kind`（**不是** `items[]` 包装，与 `tagsall` 不同） |
-| `tagsall` | `items[]`：`id`、`name`、`count` 等 |
-| `recipes` | `items[]`：`id`、`title`、`description`、`steps` 等 |
-| `search` | `items[]` + `total`/`limit`/`offset`：按 `q` 返回的匹配资产/随手记/配方（**必须带 `-Query`**，否则 400） |
-| `plaza` | `total`/`limit`/`offset` + `items[]`：`id`、`title`、`title_zh`、`summary`、`tags`、`cover_public_url`、`save_count`、`copied_count` 等 |
-
-> 直接用 `Invoke-RestMethod` 也可，需手动带 `Authorization: Bearer $LUZI_AGENT_TOKEN` 头（见 `SKILL.md`）。
-
-### 用户提示词示例
+## 用户提示词示例
 
 在任意 Agent 工具中唤起本技能时，可直接用下面这些自然语言（技能会按 `<资源>` 路由到对应端点）：
 
-| 用户提示词（示例） | 路由到 |
+| 用户提示词（示例） | 预期结果（Agent 自然语言回复） |
 |---|---|
-| "读取我在炉子里的资产" / "列出我的资产" | `assets` |
-| "看看我的随手记" / "读一下我的笔记" | `notes` |
-| "列出随手记的标签" | `tags` |
-| "列出全部标签" | `tagsall` |
-| "读取我的配方" / "看看我的 recipes" | `recipes` |
-| "在炉子里搜索 前端设计" | `search` |
-| "浏览广场上的 skill" / "看看广场里有什么" | `plaza` |
+| "读取我在炉子里的资产" / "列出我的资产" | 「你共有 12 条资产，例如：《卡片布局设计》《周会纪要》《竞品调研》……需要我展开某一条的详情吗？」 |
+| "看看我的随手记" / "读一下我的笔记" | 「你最近的随手记有：①周会纪要 ②读书摘抄 ③灵感碎片……要读哪一篇的正文？」 |
+| "列出随手记的标签" | 「你的随手记使用了这些标签：工作、生活、灵感、读书……」 |
+| "列出全部标签" | 「全部标签共 8 个，用得最多的是：工作(42)、生活(18)、灵感(11)。」 |
+| "读取我的配方" / "看看我的 recipes" | 「你共有 5 个配方，比如：晨间例行、阅读清单、健身打卡。想看某个配方的步骤吗？」 |
+| "在炉子里搜索 前端设计" | 「关于“前端设计”找到 3 条结果：①卡片布局设计 ②配色方案笔记 ③组件库整理。要看哪条？」 |
+| "浏览广场上的 skill" / "看看广场里有什么" | 「广场上现有 20 个公开作品，比较热门的有：自动签到助手(收藏 318)、日报生成器(收藏 205)……」 |
 
 > 提示词只需点明「资源类型」（资产 / 随手记 / 标签 / 配方 / 搜索 / 广场）与「读取」意图即可，技能会自动带上 `LUZI_AGENT_TOKEN` 调用对应端点。
 
@@ -86,3 +44,12 @@ $env:LUZI_AGENT_TOKEN = 'lza_xxxx'
 
 - 本仓库为**公开**仓库，**绝不要**在其中提交真实 `LUZI_AGENT_TOKEN`。
 - 凭证仅通过环境变量或本地 `.env` 提供。
+
+## 免责声明
+
+- 本仓库仅是对炉子(luzi.top)公开 Agent API 的能力封装示例，**非官方产物**，与炉子官方无任何隶属或合作关系。
+- 本技能仅供个人学习、测试与本地调用使用，作者不对使用本技能产生的任何后果（包括但不限于数据读取异常、误改线上数据、凭证泄露、服务中断、账号封禁等）承担责任。
+- 通过本技能访问炉子服务即代表你同意遵守炉子平台的用户协议与服务条款，**由此产生的权利义务关系仅存在于你与炉子平台之间**。
+- 调用前请确认你拥有相关账号与数据的合法访问权限；**写入类能力未经验证**，请小范围试探，由此造成的任何数据变更风险由使用者自行承担。
+- 因炉子平台接口、鉴权或策略变更导致本技能失效的，作者不保证及时更新；使用前请自行核对最新接口规范。
+- 本仓库按「现状」提供，不提供任何明示或暗示的担保（含可用性、准确性、适销性或特定用途适用性）。
