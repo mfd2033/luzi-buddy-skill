@@ -1,10 +1,10 @@
 # luzi-skill
 
-炉子(luzi.top) Agent API 的 CodeBuddy Skill。把官方声明的能力封装成可调用接口，token 通过环境变量读取，避免硬编码泄露。
+炉子(luzi.top) Agent API 的技能封装（Skill）。把官方声明的能力封装成可调用接口，token 通过环境变量读取，避免硬编码泄露。本技能与具体 Agent 工具无关，理论上任意支持 Skill 机制的 Agent 均可使用。
 
-## 安装为 CodeBuddy Skill
+## 安装为 Agent 技能
 
-把本仓库放进 CodeBuddy 的 skills 目录（或在本目录通过 skill 管理器部署）。核心文件：
+把本仓库放进所用 Agent 工具的 skills 目录（或在本目录通过技能管理器部署）。核心文件：
 
 - `SKILL.md` —— Skill 定义与使用说明
 - `luzi.ps1` —— 调用炉子 Agent API 的 PowerShell 助手
@@ -32,7 +32,50 @@ $env:LUZI_AGENT_TOKEN = 'lza_xxxx'
 | 标签读取 | GET | `/api/v1/notes/tags`、`/api/v1/tags/` |
 | 配方读取 | GET | `/api/v1/recipes/` |
 | 搜索读取 | GET | `/api/v1/search` |
-| 浏览广场 | GET | `/api/v1/community/plaza/publications` |
+| 浏览广场 | GET | `/api/v1/community/plaza/publications`（2026-09-17 真实 token 实测 200，返回 `total`/`limit`/`offset` + `items[]`，每条含 `id`/`title`/`title_zh`/`summary`/`tags`/`cover_public_url`/`save_count` 等字段） |
+
+### 调用示例
+
+所有已验证能力统一通过 `luzi.ps1` 的 `<资源>` 参数调用，token 自动从环境变量或 `.env` 读取：
+
+```powershell
+.\luzi.ps1 assets   # 资产读取  -> GET /api/v1/assets/
+.\luzi.ps1 notes    # 随手记读取 -> GET /api/v1/notes/
+.\luzi.ps1 tags     # 随手记标签 -> GET /api/v1/notes/tags
+.\luzi.ps1 tagsall  # 全部标签   -> GET /api/v1/tags/
+.\luzi.ps1 recipes  # 配方读取   -> GET /api/v1/recipes/
+.\luzi.ps1 search   # 搜索读取   -> GET /api/v1/search
+.\luzi.ps1 plaza    # 浏览广场   -> GET /api/v1/community/plaza/publications
+```
+
+返回均为 JSON（脚本用 `ConvertTo-Json -Depth 10` 输出），典型结构：
+
+| 资源 | 关键返回字段 |
+|---|---|
+| `assets` | `items[]`：`id`、`name`、`type`、`content`、`updated_at` 等 |
+| `notes` | `items[]`：`id`、`title`、`body`、`tags`、`created_at` 等 |
+| `tags` / `tagsall` | `items[]`：`id`、`name`、`count` 等 |
+| `recipes` | `items[]`：`id`、`title`、`description`、`steps` 等 |
+| `search` | `items[]`：按查询返回的匹配资产/随手记/配方 |
+| `plaza` | `total`/`limit`/`offset` + `items[]`：`id`、`title`、`title_zh`、`summary`、`tags`、`cover_public_url`、`save_count`、`copied_count` 等 |
+
+> 直接用 `Invoke-RestMethod` 也可，需手动带 `Authorization: Bearer $LUZI_AGENT_TOKEN` 头（见 `SKILL.md`）。
+
+### 用户提示词示例
+
+在任意 Agent 工具中唤起本技能时，可直接用下面这些自然语言（技能会按 `<资源>` 路由到对应端点）：
+
+| 用户提示词（示例） | 路由到 |
+|---|---|
+| "读取我在炉子里的资产" / "列出我的资产" | `assets` |
+| "看看我的随手记" / "读一下我的笔记" | `notes` |
+| "列出随手记的标签" | `tags` |
+| "列出全部标签" | `tagsall` |
+| "读取我的配方" / "看看我的 recipes" | `recipes` |
+| "在炉子里搜索 前端设计" | `search` |
+| "浏览广场上的 skill" / "看看广场里有什么" | `plaza` |
+
+> 提示词只需点明「资源类型」（资产 / 随手记 / 标签 / 配方 / 搜索 / 广场）与「读取」意图即可，技能会自动带上 `LUZI_AGENT_TOKEN` 调用对应端点。
 
 ## 未验证能力（谨慎使用）
 
