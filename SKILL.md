@@ -14,20 +14,22 @@ description: 炉子Buddy（luziBuddy）：调用炉子(luzi.top) Agent API 的�
 
 ## 已验证的能力（已用 token 实测返回 200 + 真实数据）
 
-> 客户端功能名 ↔ API 资源名：`参考`=资产(`assets`)、`提示词`=配方(`recipes`)、`随手记`=notes、`搜索`=search、`广场`=plaza。`标签` 是随手记的子功能（内联 `#标签`）。`skill` 是客户端独立功能，其专属读取端点尚未验证（广场返回的多为 skill 作品）。
+> 客户端功能名 ↔ API 资源名：`参考`=资产(`assets`)、`提示词`=recipes（`recipes` 为 API 资源名）、`随手记`=notes、`搜索`=search、`广场`=plaza。`标签` 是随手记的子功能（内联 `#标签`）。`skill` 是客户端独立功能，其专属读取端点尚未验证（广场返回的多为 skill 作品）。
 
 | 能力（客户端名 / API 资源） | 方法 | 端点 |
 |---|---|---|
 | 参考读取（资产 /assets/） | GET | `/api/v1/assets/` |
 | 随手记读取（notes） | GET | `/api/v1/notes/` |
 | 标签读取（notes 子功能） | GET | `/api/v1/notes/tags` 与 `/api/v1/tags/` |
-| 提示词读取（配方 /recipes/） | GET | `/api/v1/recipes/` |
+| 提示词读取 /recipes/ | GET | `/api/v1/recipes/` |
 | 搜索读取（search） | GET | `/api/v1/search?q=<词>`（需带 `q` 参数，否则 400） |
 | 浏览广场（plaza） | GET | `/api/v1/community/plaza/publications`（2026-09-17 真实 token 实测 200，返回 `total`/`limit`/`offset` + `items[]`，每条含 `id`/`title`/`title_zh`/`summary`/`tags`/`cover_public_url`/`save_count`/`copied_count` 等字段） |
 | 随手记写入 | POST | `/api/v1/notes/`（2026-09-17 实测 201，请求体见下） |
 | 标签写入 | POST | `/api/v1/tags/`（2026-09-17 实测 201，请求体必须含 `kind`，见下） |
 | 随手记删除 | DELETE | `/api/v1/notes/{id}`（2026-09-17 实测 204） |
 | 标签删除 | DELETE | `/api/v1/tags/{id}?expected_kind=tag`（2026-09-17 实测 204，缺 `expected_kind` 则 422） |
+| 提示词写入 /recipes/ | POST | `/api/v1/recipes/`（2026-09-17 实测 201，请求体见下） |
+| 提示词删除 /recipes/ | DELETE | `/api/v1/recipes/{id}`（2026-09-17 实测 204，无需 `expected_kind`） |
 
 ## 写入 / 删除能力（2026-09-17 实测）
 
@@ -51,6 +53,27 @@ description: 炉子Buddy（luziBuddy）：调用炉子(luzi.top) Agent API 的�
 - `kind` **必填**，否则返回 `422 VALIDATION_ERROR`（`body.kind` 必填）。标签读取返回的 `kind` 即 `"tag"`。
 - 响应 `201 Created`，返回 `{ id, name, normalized_name, is_system, kind }`。
 
+### 提示词写入 `POST /api/v1/recipes/`
+请求体（JSON）：
+```json
+{
+  "name": "提示词名（必填）",
+  "description": "可选描述",
+  "components": [
+    { "asset_id": "已存在资产的 ID（必填）", "role": "prompt" }
+  ]
+}
+```
+- `name`：**必填**。
+- `components`：**至少 1 个**。提示词不是自由文本，而是由若干已有资产（提示词 / profile / 参考 / skill）组合而成；每个 component 必须引用一个**已存在**的资产 `asset_id`。
+- `role`：**必填**，且限定为四种资产类型之一：`prompt` / `profile` / `reference` / `skill`（须与所引用资产的 `type` 一致，否则 `422`）。
+- 缺少 `name` → `422`（body.name required）；`components` 为空 → `400`（components_required）。
+- 响应 `201 Created`，返回完整提示词对象（含 `components[]` 每个元素的 `asset_type`/`asset_title` 快照字段，以及 `component_counts` 统计）。
+- 提示词**支持打标签**，但只能经由 `PUT /recipes/{id}` 整体更新的 **`tag_ids`** 字段管理（值为已有标签的 UUID 数组）：关联标签 = `tag_ids:["<tag_uuid>"]`，移除标签 = `tag_ids:[]`（或去掉该 id），均返回 `200`。注意：`POST` 创建时传 `tags` 会被服务端静默忽略；`PATCH` 该路径返回 `Method Not Allowed`；专门的 `/recipes/{id}/tags` 子资源端点返回 `404`——这几种方式都不生效，只有 `PUT` 的 `tag_ids` 有效。
+
+### 提示词删除 `DELETE /api/v1/recipes/{id}`
+- 直接 `DELETE /api/v1/recipes/{id}` → `204`（删除成功；**无需** `expected_kind` 之类的查询参数，与标签删除不同）。
+
 ### 删除
 - `DELETE /api/v1/notes/{id}` → `204`（删除成功）。
 - `DELETE /api/v1/tags/{id}?expected_kind=tag` → `204`；**必须带查询参数 `expected_kind=tag`**，否则 `422`（`query.expected_kind` 必填）。
@@ -73,7 +96,7 @@ $env:LUZI_AGENT_TOKEN = 'lza_xxx'   # 你的 agent 凭证
 .\luzi.ps1 notes       # 读取随手记
 .\luzi.ps1 tags        # 读取随手记标签
 .\luzi.ps1 tagsall     # 读取全部标签
-.\luzi.ps1 recipes     # 读取提示词（配方）
+.\luzi.ps1 recipes     # 读取提示词
 .\luzi.ps1 search -Query "前端设计"   # 搜索读取（必须带 -Query）
 .\luzi.ps1 plaza       # 浏览广场
 ```
@@ -88,13 +111,12 @@ Invoke-RestMethod -Uri "https://app.luzi.top/api/v1/assets/" -Headers $h
 ## 未验证的能力（端点/写操作尚未实测，使用前请先小范围试探）
 以下官方声明的能力**尚未**用真实 token 实测端点与写权限，调用前请先小范围试探，避免误改线上数据：
 - 参考写入（资产 `POST /api/v1/assets/` 端点未实测）
-- 提示词写入（配方 `POST /api/v1/recipes/` 端点未实测）
 - skill 读取端点（广场返回的多为 skill 作品，但 `/skills/` 类专属端点未单独实测）
 - 文件读取、文件上传
 - 从广场存副本、部署材料
 - 随手记/标签的**更新（PUT/PATCH）**端点（仅增删已实测，改尚未验证）
 
-> 已验证：随手记写入 `POST /notes/`、标签写入 `POST /tags/`、随手记删除 `DELETE /notes/{id}`、标签删除 `DELETE /tags/{id}?expected_kind=tag`（详见上文「写入 / 删除能力」）。
+> 已验证：随手记写入 `POST /notes/`、标签写入 `POST /tags/`、随手记删除 `DELETE /notes/{id}`、标签删除 `DELETE /tags/{id}?expected_kind=tag`、提示词写入 `POST /recipes/`、提示词删除 `DELETE /recipes/{id}`（详见上文「写入 / 删除能力」）。
 
 ## 环境变量
 - `LUZI_AGENT_TOKEN`：必填，炉子 agent 凭证（形如 `lza_...`）。
