@@ -20,7 +20,7 @@ description: 调用炉子(luzi.top) Agent API 的读取能力。已验证读取�
 | 标签读取 | GET | `/api/v1/notes/tags` 与 `/api/v1/tags/` |
 | 配方读取 | GET | `/api/v1/recipes/` |
 | 搜索读取 | GET | `/api/v1/search` |
-| 浏览广场 | GET | `/api/v1/community/plaza/publications` |
+| 浏览广场 | GET | `/api/v1/community/plaza/publications`（2026-09-17 真实 token 实测 200，返回 `total`/`limit`/`offset` + `items[]`，每条含 `id`/`title`/`title_zh`/`summary`/`tags`/`cover_public_url`/`save_count`/`copied_count` 等字段） |
 
 ## 用法
 配套脚本 `luzi.ps1`（PowerShell）：
