@@ -41,7 +41,15 @@ if (-not $map.ContainsKey($Resource)) {
 
 $uri = "$BaseUrl/$($map[$Resource])"
 try {
-  $r = Invoke-RestMethod -Uri $uri -Headers @{Authorization = "Bearer $Token" } -Method Get -TimeoutSec 30
+  # 关键：PowerShell 5.1 的 Invoke-RestMethod / Invoke-WebRequest 会把响应体
+  # 按 ISO-8859-1 解码成字符串，导致 UTF-8 中文变成 Mojibake（如 ç­è§é¢ä¸è½½å¨）。
+  # 改用 curl.exe 直接把原始字节写入文件（UTF-8），再读回即可完整保留中文。
+  $tmp = Join-Path $env:TEMP "luzi_resp_$(Get-Random).json"
+  curl.exe -sS -H "Authorization: Bearer $Token" "$uri" -o $tmp
+  if (-not (Test-Path $tmp)) { throw 'curl produced no response file' }
+  $json = Get-Content -Raw -Encoding utf8 $tmp
+  Remove-Item $tmp -Force
+  $r = $json | ConvertFrom-Json
   $r | ConvertTo-Json -Depth 10 -Compress:$false
 } catch {
   Write-Error "请求失败: $_"
